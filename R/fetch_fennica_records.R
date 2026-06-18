@@ -1,10 +1,10 @@
-#' @title Fetch Viola Records by Year Ranges from Finna API (Including NA Dates)
+#' @title Fetch Fennica Collection Records by Year Ranges from Finna API (Including NA Dates)
 #'
 #' @description
-#' This function fetches records from the Finna API in chunks divided by year ranges, handling missing date values.
+#' This function fetches records from the Finna API in chunks divided by year ranges, handling missing date values for the Fennica collection.
 #'
 #' @param base_query The base query string, defaults to "*".
-#' @param base_filters A character vector of filters for the search, e.g., `c('collection:"VIO"')`.
+#' @param base_filters A character vector of filters for the search, e.g., `c('collection:"FEN"')`.
 #' @param year_ranges A list of numeric vectors specifying year ranges, e.g., `list(c(2000, 2005), c(2006, 2010))`.
 #' @param include_na Whether to include records with missing `main_date_str`. Default is `TRUE`.
 #' @param limit_per_query Maximum number of records to fetch per query. Default is 100000.
@@ -13,14 +13,13 @@
 #' @return A tibble containing all fetched records.
 #'
 #' @export
-fetch_viola_records <- function(base_query = "*",
-                                base_filters = c('collection:"VIO"',"finna.include_hidden_parts:1"),
-                                year_ranges = list(c(0, as.numeric(format(Sys.Date(), "%Y")))),
-                                include_na = TRUE,
-                                limit_per_query = 100000,
-                                total_limit = Inf,
-                                delay_after_query = 5) {
-
+fetch_fennica_records <- function(base_query = "*",
+                                  base_filters = c('collection:"FEN"',"finna.include_hidden_parts:1"),
+                                  year_ranges = list(c(0, as.numeric(format(Sys.Date(), "%Y")))),
+                                  include_na = TRUE,
+                                  limit_per_query = 100000,
+                                  total_limit = Inf,
+                                  delay_after_query = 5) {
 
   # Input validation
   if (!all(sapply(year_ranges, function(x) length(x) == 2 && is.numeric(x) && x[1] <= x[2]))) {
@@ -35,10 +34,13 @@ fetch_viola_records <- function(base_query = "*",
     stop("total_limit must be a positive number.")
   }
 
-  message("Fetching records started...")
+  message("Fetching records for Fennica collection started...")
 
   all_results <- list()
   total_fetched <- 0
+
+  # Base filter for Fennica collection
+  base_filters <- c('collection:"FEN"')
 
   # Iterate over year ranges
   for (range in year_ranges) {
@@ -63,12 +65,6 @@ fetch_viola_records <- function(base_query = "*",
       return(NULL)
     })
 
-    # Append valid results
-    # if (!is.null(results) && nrow(results) > 0) {
-    #   all_results <- c(all_results, list(results))
-    #   total_fetched <- total_fetched + nrow(results)
-    # }
-    # Append valid results
     if (!is.null(results) && nrow(results) > 0) {
       if (total_fetched + nrow(results) > total_limit) {
         results <- results[1:(total_limit - total_fetched), ]
@@ -77,16 +73,13 @@ fetch_viola_records <- function(base_query = "*",
       total_fetched <- total_fetched + nrow(results)
     }
 
-    # Log progress
     message(sprintf("Range %d-%d: Fetched %d records (Total: %d)", range[1], range[2], ifelse(is.null(results), 0, nrow(results)), total_fetched))
 
-    # Stop if total limit is reached
     if (total_fetched >= total_limit) {
       message("Reached the total record limit.")
       break
     }
 
-    # Add delay between queries
     Sys.sleep(delay_after_query)
   }
 
@@ -116,7 +109,6 @@ fetch_viola_records <- function(base_query = "*",
   combined_results <- bind_rows(all_results) %>%
     distinct()  # Remove duplicates
 
-  # Final message
   message(sprintf("Fetching completed. Total records fetched: %d", total_fetched))
   return(combined_results)
 }

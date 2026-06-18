@@ -1,4 +1,5 @@
 test_that("search_publisher performs a basic search correctly", {
+  skip_on_cran()
   # Test 1: Basic Search
   search_results <- suppressWarnings(search_publisher("sibelius", limit = 10))
   expect_true(is.data.frame(search_results))

@@ -30,6 +30,8 @@ A tibble containing the record IDs and their respective publishers.
 This function retrieves only the publisher information from the Finna index based on the search query.
 }
 \examples{
+\dontrun{
 publishers <- search_publisher("sibelius", limit = 10)
 print(publishers)
+}
 }

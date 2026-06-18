@@ -34,6 +34,8 @@ This function retrieves multiple Finna records based on a vector of record IDs. 
 which fields to return, the language, and the pagination options.
 }
 \examples{
+\dontrun{
 records <- get_finna_records("fikka.3405646", field = "title", prettyPrint = TRUE, lng = "en-gb")
 print(records)
+}
 }

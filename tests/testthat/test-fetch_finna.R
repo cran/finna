@@ -1,5 +1,5 @@
-
 test_that("fetch_finna performs a basic fetch correctly", {
+  skip_on_cran()
   # Test 1: Basic Fetch
   fetch_results <- suppressWarnings(fetch_finna(query = "record_format:ead", limit = 10))
   expect_true(is.data.frame(fetch_results), "The result should be a data frame.")

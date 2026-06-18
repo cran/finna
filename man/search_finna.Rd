@@ -56,6 +56,8 @@ This function retrieves records from the Finna index with an option to limit the
 The function paginates through the results, fetching records until the specified total limit is reached.
 }
 \examples{
+\dontrun{
 search_results <- search_finna("sibelius", sort = "main_date_str desc", limit = 100)
 print(search_results)
+}
 }

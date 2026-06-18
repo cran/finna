@@ -41,6 +41,10 @@ record <- search_finna("sibelius", filters = c("free_online_boolean:1"))
 print(record)
 
 ## ----message = FALSE, warning = FALSE-----------------------------------------
+record <- search_finna("laatokka",filters = c('~building:"0/SA-kuva/"'))
+print(record)
+
+## ----message = FALSE, warning = FALSE-----------------------------------------
 record <- search_finna("sibelius", filters = c('~media_type_str_mv:"0/image/"'))
 print(record)
 

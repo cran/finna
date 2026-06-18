@@ -2,6 +2,7 @@
 #'
 #' @param x An object to convert (e.g., a Finna API query or response object).
 #'
+#'
 #' @keywords internal
 finna_as_json <- function(x) {
   UseMethod("finna_as_json")
@@ -9,6 +10,7 @@ finna_as_json <- function(x) {
 
 #' @rdname finna_as_json
 #' @keywords internal
+#' @export
 finna_as_json.finna_query <- function(x) {
   # If the query has fields like 'filters' or 'facets', ensure they are handled
   if (!is.null(x$filters)) {

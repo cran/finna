@@ -1,4 +1,5 @@
 test_that("search_finna performs a basic search correctly", {
+  skip_on_cran()
   # Test 1: Basic Search
   search_results <- suppressWarnings(search_finna("sibelius", type = "Author"))
   expect_true(is.data.frame(search_results), "The result should be a data frame.")

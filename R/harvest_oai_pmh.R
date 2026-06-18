@@ -11,13 +11,13 @@
 #' @param record_limit limits the number of records that the user wants to fetch
 #' @param output_file output file to be saved as a csv file.
 #' @param user_agent A string. A custom User-Agent string to identify the service. Default is "FinnaHarvester/1.0".
+#'
 #' @return A tibble with the harvested records containing selected metadata fields.
 #' @importFrom xml2 read_xml xml_find_all xml_find_first xml_text xml_attr xml_name xml_ns_strip
 #' @importFrom httr GET content user_agent
 #' @importFrom dplyr bind_rows
 #' @importFrom tibble as_tibble tibble
 #' @importFrom readr write_csv
-#' @import progress
 #' @export
 #'
 #' @examples
@@ -112,6 +112,7 @@ harvest_oai_pmh <- function(base_url, metadata_prefix, set = NULL,
     }
 
     raw_content <- httr::content(response, as = "text", encoding = "UTF-8")
+    #print(raw_content)
     xml <- read_xml(raw_content)
     xml <- strip_namespaces(xml)
 
@@ -121,6 +122,10 @@ harvest_oai_pmh <- function(base_url, metadata_prefix, set = NULL,
         tryCatch({
           metadata <- xml_find_first(record, "metadata")
           raw_xml <- as.character(record)
+
+          # Extract setSpec (Collection Name)
+          set_spec_nodes <- xml_find_all(record, ".//setSpec")
+          set_spec <- if (length(set_spec_nodes) > 0) paste(xml_text(set_spec_nodes), collapse = "|") else NA
 
           if (!is.null(metadata)) {
             # Extract all child elements dynamically with unique names
@@ -134,15 +139,20 @@ harvest_oai_pmh <- function(base_url, metadata_prefix, set = NULL,
             # Return a named list with metadata fields and raw XML
             metadata_list <- setNames(as.list(field_data), unique_field_names)
             metadata_list$raw_xml <- raw_xml
+            metadata_list$setSpec <- set_spec  # Store collection name
             metadata_list
           } else {
             list(raw_xml = raw_xml)  # Raw XML only if no metadata
+            list(setSpec = set_spec)
           }
         }, error = function(e) {
           warning("Error parsing record: ", e$message)
           return(NULL)
         })
       })
+
+      # Fetch identifiers and setSpec
+      id_set_map <- fetch_identifiers_with_sets(base_url, metadata_prefix, set, user_agent)
 
       # Filter out NULL results
       record_list <- record_list[!sapply(record_list, is.null)]
@@ -170,9 +180,14 @@ harvest_oai_pmh <- function(base_url, metadata_prefix, set = NULL,
       }
     }
 
-    if (verbose && !is.null(pb)) pb$tick(length(records))
+    # Update Progress Bar Safely
+    if (!is.null(pb)) {
+      pb$tick(min(length(record_list), pb$total - pb$current))
+    }
 
-    if (is.na(resumption_token) || resumption_token == "") {
+    # Stop if the record limit is reached
+    if (!is.null(record_limit) && fetched_records >= record_limit) {
+      all_records <- all_records[1:record_limit]
       break
     }
 
@@ -182,7 +197,20 @@ harvest_oai_pmh <- function(base_url, metadata_prefix, set = NULL,
 
   # Combine all records into a tibble
   if (length(all_records) > 0) {
-    df <- dplyr::bind_rows(lapply(all_records, function(x) as_tibble(x, .name_repair = "unique")))
+    if (metadata_prefix == "marc21") {
+      df <- dplyr::bind_rows(lapply(all_records, function(x) {
+        if (!is.null(x$raw_xml)) {
+          parsed <- parse_marc_fields(x$raw_xml)
+          if (!is.null(x$setSpec)) parsed$setSpec <- x$setSpec
+          return(tibble::as_tibble(parsed, .name_repair = "unique"))
+        } else {
+          return(NULL)
+        }
+      }))
+    } else {
+      df <- dplyr::bind_rows(lapply(all_records, function(x) tibble::as_tibble(x, .name_repair = "unique")))
+    }
+
   } else {
     df <- tibble::tibble()
   }
@@ -195,6 +223,16 @@ harvest_oai_pmh <- function(base_url, metadata_prefix, set = NULL,
   if (verbose) message("Finished harvesting ", nrow(df), " records.")
   return(df)
 }
+
+#' @title Fetch Available OAI-PMH Sets
+#' @description Fetches and lists the available sets (collections) from an OAI-PMH server.
+#' @param base_url A string. The base URL of the OAI-PMH server.
+#' @param user_agent A string. Custom User-Agent string. Default is "OAIHarvester/1.0".
+#' @return A tibble with setSpec and setName columns.
+#' @importFrom httr GET content user_agent
+#' @importFrom xml2 read_xml xml_find_all xml_text
+#' @importFrom tibble tibble
+#' @export
 fetch_oai_sets <- function(base_url, user_agent = "FinnaHarvester/1.0") {
   url <- paste0(base_url, "?verb=ListSets")
   response <- tryCatch({
@@ -228,3 +266,40 @@ strip_namespaces <- function(doc) {
   return(doc)
 }
 
+
+
+#' @title Parse a MARC21 Record from Raw XML
+#' @description Converts MARC21 XML to a named list with field+subfield keys (e.g., "245a").
+#' @param xml_string A string of MARCXML for one record.
+#' @return A named list of parsed fields.
+parse_marc_fields <- function(xml_string) {
+  doc <- xml2::read_xml(xml_string)
+  xml2::xml_ns_strip(doc)
+
+  leader <- xml2::xml_text(xml2::xml_find_first(doc, ".//leader"))
+  ctrl_fields <- xml2::xml_find_all(doc, ".//controlfield")
+  ctrl_list <- stats::setNames(xml2::xml_text(ctrl_fields), xml2::xml_attr(ctrl_fields, "tag"))
+
+  data_fields <- xml2::xml_find_all(doc, ".//datafield")
+  data_list <- list()
+
+  for (df in data_fields) {
+    tag <- xml2::xml_attr(df, "tag")
+    subfields <- xml2::xml_find_all(df, ".//subfield")
+    for (sf in subfields) {
+      code <- xml2::xml_attr(sf, "code")
+      key <- paste0(tag, code)
+      val <- xml2::xml_text(sf)
+
+      # Collapsing multiple values into one string (with | separator)
+      if (!is.null(data_list[[key]])) {
+        data_list[[key]] <- paste(data_list[[key]], val, sep = " | ")
+      } else {
+        data_list[[key]] <- val
+      }
+    }
+  }
+
+  result <- c(list(leader = leader), ctrl_list, data_list)
+  return(result)
+}

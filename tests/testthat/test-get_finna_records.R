@@ -1,5 +1,5 @@
-
 test_that("get_finna_records function handles various cases correctly", {
+  skip_on_cran()
   #skip_on_cran() # Skip on CRAN since it requires internet access
 
   # Test Case 1: Valid single ID with default options
