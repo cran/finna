@@ -1,4 +1,4 @@
-2bc1c5cfb2d3414576afae2382fe2616 *DESCRIPTION
+dcc68bd778fd6f654444bb70a11bf0fa *DESCRIPTION
 363f2f69d06ef2b067f2dff52c9478c3 *LICENSE
 7fb8b80fe766ca1092d8b9a4add6a031 *NAMESPACE
 058d7c8df3db28a41895933e40050a09 *NEWS.md
@@ -30,7 +30,7 @@ c0dc08be5ff78cad4acf85c10ad30cc7 *README.md
 1b02b95851a4db8235c4bd719be6116f *data/fennica_subset.rda
 c2443bb84dac1485587acfde704df8a8 *inst/doc/vignette.R
 c2fbe573d9755224ce5afb607596c3b0 *inst/doc/vignette.Rmd
-077408549aa9b30e3b8579a8c3f2dfb9 *inst/doc/vignette.html
+df8f55be8b65121deba330ee17bcff83 *inst/doc/vignette.html
 6e34a07203226467f8f68ca9e40ceddc *man/check_api_access.Rd
 dba57534b68fee1a73f517415d86c504 *man/enrich_author_name.Rd
 ed6d897807a1951c40e289ed1b959f5b *man/fennica_subset.Rd
@@ -56,7 +56,7 @@ df9e29f726961f509ac499730c9d8f3e *man/search_finna.Rd
 646a09c15b2dcbcdeee5b80a7aeae246 *man/timeline.Rd
 14a363e6f7d17f5c62dc275191cdd5ed *man/top_plot.Rd
 767efb7a1e06bd9452cf15b93e9db02a *tests/testthat.R
-70a2fa38a6d12cb082d8649894cb7d8d *tests/testthat/test-fetch_finna.R
+0c0ae1df479427533bda273db0791ca9 *tests/testthat/test-fetch_finna.R
 33924af13ddf78bff2d3e2ce383677b3 *tests/testthat/test-get_finna_records.R
 a42b94fb6e9bcc1cc525f5696c7bd166 *tests/testthat/test-search_publisher.R
 725100b5ca6fec4b43f262e00706b165 *tests/testthat/test_search_finna.R

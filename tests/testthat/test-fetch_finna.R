@@ -12,11 +12,13 @@ test_that("fetch_finna performs a basic fetch correctly", {
 
 test_that("fetch_finna handles invalid query gracefully", {
   # Test 2: Invalid Query
+  skip_on_cran()
   expect_error(fetch_finna(query = ""), "Invalid query: Query string cannot be empty.")
 })
 
 test_that("fetch_finna handles empty facet data", {
   # Test 3: Fetch with empty facet data
+  skip_on_cran()
   fetch_results_empty <- suppressWarnings(fetch_finna(query = "nonexistent_query"))
   expect_true(is.data.frame(fetch_results_empty), "The result should be a data frame even for nonexistent queries.")
   expect_true(nrow(fetch_results_empty) >= 0, "The number of rows should reflect the API response.")
@@ -24,6 +26,7 @@ test_that("fetch_finna handles empty facet data", {
 
 test_that("fetch_finna handles parameters correctly", {
   # Test 4: Check different parameters and ensure correct handling
+  skip_on_cran()
   fetch_results_params <- suppressWarnings(fetch_finna(query = "record_format:ead", limit = 5))
   expect_true(is.data.frame(fetch_results_params), "The result should be a data frame.")
   expect_lte(nrow(fetch_results_params), 5, "The number of rows should not exceed the limit.")
